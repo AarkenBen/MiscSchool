@@ -110,6 +110,9 @@ namespace CachePerformance
                     set = address % ways;
 
 
+                    /// maybe use one array [row * ways]
+                    /// then could add row to the index to acces the  x spots where data would be stored
+
                     //Console.WriteLine("The address: " + address + " The tag before rounding: " + tag + " and the row: " + Math.Floor(row));
 
                     //hit
