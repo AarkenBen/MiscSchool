@@ -42,8 +42,8 @@ namespace CachePerformance
         // represents the cache
         private double[] data;
 
-        // represents the tag in each row
-        private int[] tag;
+        // the Keys coorilate to the rows and the value holds the tag, valid, and data.
+        Dictionary<int, block> cache;
 
         public DirectMapped(int _rows, int _bytesPerBlock, int[] _array)
         {
@@ -55,19 +55,21 @@ namespace CachePerformance
 
             bitsRow = Math.Log(rows, 2);
 
-            data = new double[rows];
-            tag = new int[rows];
+            data = new double[bytesPerBlock];
+
+            cache = new Dictionary<int, block>();
 
             if (withinAvailableRange())
             {
 
-                Console.WriteLine(cacheSize + " out of " + cacheLimit);
-                Console.Read();
+                //Console.WriteLine(cacheSize + " out of " + cacheLimit);
+                //Console.Read();
+                simulate();
             }
             else
             {
                 Console.WriteLine(cacheSize + "  is over the limit of " + cacheLimit);
-                Console.Read();
+                
             }
         }
 
@@ -89,20 +91,86 @@ namespace CachePerformance
 
         private void simulate()
         {
-            
-            double tag, row, offset;
-            foreach(var address in addresses)
-            {
-                tag = (address / (bytesPerBlock * rows));
-                row = (address / bytesPerBlock) % 4;
-                offset = address % bytesPerBlock;
 
-                if(data[(int)row] == address)
+            double tag, offset;
+            int row, passMiss;
+            int totalMiss = 0;
+
+            for (int i = 0; i < 5; i++)
+            {
+                passMiss = 0;
+                
+
+                Console.WriteLine("\nPass: " + (i + 1));
+
+                foreach (var address in addresses)
                 {
-                    //test
+                    tag = (address / (bytesPerBlock * rows));
+                    row = (address / bytesPerBlock) % rows;
+                    offset = address % bytesPerBlock;
+
+
+                    //Console.WriteLine("The address: " + address + " The tag before rounding: " + tag + " and the row: " + Math.Floor(row));
+
+                    //hit
+                    if (cache.ContainsKey(row))
+                    {
+                        if (cache[(int)row].tag == (int)tag && cache[(int)row].valid == true)
+                        {
+                            Console.WriteLine("Accessing " + address + "(tag " + tag + "): hit from row " + row);
+
+                        }
+                        else
+                        {
+                            Console.WriteLine("Accessing " + address + "(tag " + tag + "): miss - cached to row " + row);
+                            block b = new block(true, (int)tag);
+                            cache[row].tag = (int)tag;
+                            passMiss++;
+                        }
+
+                    }
+                    else
+                    {
+
+                        //miss
+                        Console.WriteLine("Accessing " + address + "(tag " + tag + "): miss - cached to row " + row);
+                        block b = new block(true, (int)tag);
+                        cache.Add(row, b);
+                        passMiss++;
+                    }
+                    
                 }
+
+                Console.WriteLine("pass misses: " + passMiss);
+                totalMiss += passMiss;
+            }
+            Console.WriteLine("Total misses over 5 iterations: " + totalMiss);
+
+            double miss = totalMiss / 5;
+
+            double cpi = (miss * ( 20 + (1 * bytesPerBlock)) + (addresses.Length - miss) * 1) / addresses.Length;
+
+            Console.WriteLine("average over 5 iterations CPI: " + cpi);
+
+            Console.ReadLine();
+        }
+
+
+
+        public class block
+        {
+            public bool valid = false;
+
+            public int tag { get; set; }
+            
+            public block(bool _valid, int _tag)
+            {
+                valid = _valid;
+                tag = _tag;
             }
         }
 
     }
+
+    
 }

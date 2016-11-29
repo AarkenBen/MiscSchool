@@ -14,7 +14,7 @@ namespace CachePerformance
         public const int validBit = 1;
 
         // cache size limit
-        public const int cacheLimit = 800;
+        public const int cacheLimit = 900;
 
         // size of the address
         public const int addressSize = 16;
@@ -38,23 +38,42 @@ namespace CachePerformance
         private double cacheSize;
 
         // the array of address
-        private int[] address;
+        private int[] addresses;
+
+        // the blocks of data
+        //private Dictionary<int, block> cache;
+
+
+        private int[] tags;
+        private int[] data;
+        private int[] lruArray;
+        private bool[] valid;
+        
 
         public FullyAssociative(int _rows, int _bytesPerBlock, int[] _array)
         {
             rows = _rows;
             bytesPerBlock = _bytesPerBlock;
-            address = _array;
+            addresses = _array;
 
             bitsLRU = Math.Log(rows, 2);
 
-            bitsOffSet = Math.Log(bytesPerBlock, 2)
-                ;
+            bitsOffSet = Math.Log(bytesPerBlock, 2);
+
+
+            //cache = new Dictionary<int, block>();
+
+            tags = new int[rows];
+            data = new int[rows];
+            lruArray = new int[rows];
+            valid = new bool[rows];
+
+            
             if (withinAvailableRange())
             {
-
-                Console.WriteLine(cacheSize + " out of " + cacheLimit);
-                Console.Read();
+                //Console.WriteLine(cacheSize + " out of " + cacheLimit);
+                //Console.Read();
+                simulate();
             }
             else
             {
@@ -77,6 +96,142 @@ namespace CachePerformance
                 return false;
             else
                 return true;
+        }
+
+        private void simulate()
+        {
+
+            double tag, offset;
+            int passMiss;
+            int totalMiss = 0;
+            int hit = 0;
+            bool hitIT = false;
+
+            int rowToWrite = 0;
+            
+            for (int i = 0; i < 1; i++)
+            {
+                passMiss = 0;
+
+
+                Console.WriteLine("\nPass: " + (i + 1));
+
+                foreach (var address in addresses)
+                {
+                    hitIT = false;
+                    tag = (address / (bytesPerBlock * rows));
+                    //row = (address / bytesPerBlock) % rows;
+                    offset = address % bytesPerBlock;
+
+                    
+                    for(int p = 0; p < data.Length; p++)
+                    {
+                        if (valid[p] == true)
+                        {
+                            int lowerBound = (address / bytesPerBlock) * bytesPerBlock;
+                            Console.WriteLine("address " + address + " lower bound " + lowerBound);
+
+                            // hit
+                            if (data[p] >= lowerBound && data[p] <= lowerBound + bytesPerBlock - 1)
+                            {
+                                hit++;
+                                hitIT = true;
+                                break;
+                            }
+                        }
+
+                        
+                    }
+
+                    if(hitIT == false)
+                    {
+                        // miss
+                        Console.WriteLine("miss");
+                        //figures out where to write to
+                        if (valid.Contains(false))
+                        {
+                            for (int j = 0; j <= addresses.Length; j++)
+                            {
+                                if (valid[j] == false)
+                                {
+                                    rowToWrite = j;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            int lowest = rows;
+
+                            for (int j = 0; j <= lruArray.Length; j++)
+                            {
+                                if (lruArray[j] == 0)
+                                {
+                                    rowToWrite = j;
+                                    break;
+                                }
+                                else if (lruArray[j] < lowest)
+                                {
+                                    lowest = lruArray[j];
+                                    rowToWrite = j;
+                                }
+                            }
+                        }
+
+                        //passMiss++;
+                        data[rowToWrite] = address;
+                        valid[rowToWrite] = true;
+
+                        for (int k = 0; k < lruArray.Length; k++)
+                        {
+                            if (k == rowToWrite)
+                            {
+                                lruArray[k] = rows - 1;
+                            }
+                            else
+                                lruArray[k] = lruArray[k] - 1;
+                        }
+                    }
+                }
+                Console.WriteLine(hit);
+                passMiss = addresses.Length - hit;
+                hit = 0;
+                Console.WriteLine("pass misses: " + passMiss);
+                totalMiss += passMiss;
+            }
+            Console.WriteLine("Total misses over 5 iterations: " + totalMiss);
+
+            double miss = totalMiss / 1;
+
+            double cpi = (miss * (20 + (1 * bytesPerBlock)) + (addresses.Length - miss) * 1) / addresses.Length;
+
+            Console.WriteLine("average over 5 iterations CPI: " + cpi);
+
+            Console.ReadLine();
+        }
+
+
+
+        public class block
+        {
+            public bool valid = false;
+
+            public int tag { get; set; }
+            
+            public int LRU { get; set; }
+
+            public int low { get; set; }
+
+            public int high { get; set; }
+
+            public block(bool _valid, int _tag, int _LRU, int _low, int _high)
+            {
+                valid = _valid;
+                tag = _tag;
+                LRU = _LRU;
+                low = _low;
+                high = _high;
+            }
         }
     }
 }
