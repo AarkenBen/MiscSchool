@@ -109,7 +109,7 @@ namespace CachePerformance
             int set;
             bool itsAHit;
 
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 5; i++)
             {
                 passMiss = 0;
 
@@ -205,7 +205,7 @@ namespace CachePerformance
             }
             Console.WriteLine("Total misses over 5 iterations: " + totalMiss);
 
-            double miss = totalMiss / 1;
+            double miss = totalMiss / 5;
 
             double cpi = (miss * (20 + (1 * bytesPerBlock)) + (addresses.Length - miss) * 1) / addresses.Length;
 
