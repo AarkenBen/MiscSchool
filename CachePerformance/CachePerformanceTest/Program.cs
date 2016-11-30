@@ -19,7 +19,7 @@ namespace CachePerformance
 
 
             // create a set associative cache
-            //setAssociative sA = new setAssociative(4,4,4,array);
+            setAssociative sA = new setAssociative(8,4,2, array);
 
 
             // create a direct mapped cache

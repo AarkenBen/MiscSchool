@@ -161,6 +161,7 @@ namespace CachePerformance
                         }
                         else
                         {
+                            // might need to be rows minus 1
                             int lowest = rows;
 
                             for (int j = 0; j <= lruArray.Length; j++)

@@ -13,7 +13,7 @@ namespace CachePerformance
         public const int validBit = 1;
 
         // cache size limit
-        public const int cacheLimit = 800;
+        public const int cacheLimit = 900;
 
         // size of the address
         public const int addressSize = 16;
@@ -45,6 +45,15 @@ namespace CachePerformance
         // array of addresses
         private int[] addresses;
 
+        // array containing LRU bits
+        private int[] lruArray;
+
+        // array containing data
+        private int[] tagArray;
+
+        // indiciates in block is valid or not
+        private bool[] valid;
+
         public setAssociative(int _rows, int _bytesPerBlock, int _ways, int[] _array)
         {
             rows = _rows;
@@ -57,6 +66,10 @@ namespace CachePerformance
             bitsLRU = Math.Log(rows, 2);
 
             bitsRow = Math.Log(rows, 2);
+
+            lruArray = new int[rows * ways];
+            tagArray = new int[rows * ways];
+            valid = new bool[rows * ways];
 
             if (withinAvailableRange())
             {
@@ -94,8 +107,9 @@ namespace CachePerformance
             int row, passMiss;
             int totalMiss = 0;
             int set;
+            bool itsAHit;
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 1; i++)
             {
                 passMiss = 0;
 
@@ -104,44 +118,86 @@ namespace CachePerformance
 
                 foreach (var address in addresses)
                 {
+                    itsAHit = false;
+
                     tag = (address / (bytesPerBlock * rows));
                     row = (address / bytesPerBlock) % rows;
                     offset = address % bytesPerBlock;
-                    set = address % ways;
+                    set = (address/bytesPerBlock) % rows;
+                    Console.WriteLine("set " + set + " tag " + tag);
+                    //Hit
+                    for(int j = 0; j < ways; j++)
+                    {
+                        //hit
+                        if(tagArray[set + (j * set)] == (int)tag && valid[set + (j * set)] == true)
+                        {
+                            Console.WriteLine("hit" + row);
+                            itsAHit = true;
+                            break;
+                        }
+                    }
+
+                    //miss
+                    if(!itsAHit)
+                    {
+                        bool noneFalse = true;
+
+                        Console.WriteLine("miss" + row);
+
+                        passMiss++;
+
+                        for (int p = 0; p < ways; p++)
+                        {
+                            if (valid[set + (p * set)] == false)
+                            {
+                                noneFalse = false;
+                                tagArray[set + (p * set)] = (int)tag;
+                                valid[set + (p * set)] = true;
+
+                                for (int k = 0; k < ways; k++)
+                                {
+                                    if (k == p)
+                                    {
+                                        lruArray[set + (k * set)] = rows - 1;
+                                    }
+                                    else
+                                        lruArray[set + (k * set)] = lruArray[set + (k * set)] - 1;
+                                }
+                                break;
+                            }
+                        }
 
 
-                    /// maybe use one array [row * ways]
-                    /// then could add row to the index to acces the  x spots where data would be stored
+                        if (noneFalse)
+                        {
+                            int lowest = rows;
+                            int wayToReplace = ways - 1;
 
-                    //Console.WriteLine("The address: " + address + " The tag before rounding: " + tag + " and the row: " + Math.Floor(row));
+                            for (int w = 0; w < ways; w++)
+                            {
 
-                    //hit
-                    //if (cache.ContainsKey(row))
-                    //{
-                    //    if (cache[(int)row].tag == (int)tag && cache[(int)row].valid == true)
-                    //    {
-                    //        Console.WriteLine("Accessing " + address + "(tag " + tag + "): hit from row " + row);
+                                if (lruArray[set + (w * set)] < lowest)
+                                {
+                                    lowest = lruArray[set + (w * set)];
+                                    wayToReplace = w;
+                                }
+                            }
 
-                    //    }
-                    //    else
-                    //    {
-                    //        Console.WriteLine("Accessing " + address + "(tag " + tag + "): miss - cached to row " + row);
-                    //        block b = new block(true, (int)tag);
-                    //        cache[row].tag = (int)tag;
-                    //        passMiss++;
-                    //    }
+                            for (int k = 0; k < ways; k++)
+                            {
+                                if (wayToReplace == k)
+                                {
+                                    lruArray[set + (k * set)] = rows - 1;
+                                }
+                                else
+                                    lruArray[set + (k * set)] = lruArray[set + (k * set)] - 1;
+                            }
 
-                    //}
-                    //else
-                    //{
-
-                    //    //miss
-                    //    Console.WriteLine("Accessing " + address + "(tag " + tag + "): miss - cached to row " + row);
-                    //    block b = new block(true, (int)tag);
-                    //    cache.Add(row, b);
-                    //    passMiss++;
-                    //}
-
+                            tagArray[set + (wayToReplace * set)] = (int)tag;
+                            valid[set + (wayToReplace * set)] = true;
+                        }
+                        
+                    }
                 }
 
                 Console.WriteLine("pass misses: " + passMiss);
@@ -149,9 +205,9 @@ namespace CachePerformance
             }
             Console.WriteLine("Total misses over 5 iterations: " + totalMiss);
 
-            double miss = totalMiss / 5;
+            double miss = totalMiss / 1;
 
-            double cpi = (miss * (18 + (3 * bytesPerBlock)) + (addresses.Length - miss) * 1) / addresses.Length;
+            double cpi = (miss * (20 + (1 * bytesPerBlock)) + (addresses.Length - miss) * 1) / addresses.Length;
 
             Console.WriteLine("average over 5 iterations CPI: " + cpi);
 
