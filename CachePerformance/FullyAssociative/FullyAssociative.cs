@@ -14,7 +14,7 @@ namespace CachePerformance
         public const int validBit = 1;
 
         // cache size limit
-        public const int cacheLimit = 900;
+        public const int cacheLimit = 800;
 
         // size of the address
         public const int addressSize = 16;
@@ -129,11 +129,12 @@ namespace CachePerformance
                         if (valid[p] == true)
                         {
                             int lowerBound = (address / bytesPerBlock) * bytesPerBlock;
-                            Console.WriteLine("address " + address + " lower bound " + lowerBound);
+                            
 
                             // hit
                             if (data[p] >= lowerBound && data[p] <= lowerBound + bytesPerBlock - 1)
                             {
+                                Console.WriteLine("Accessing " + address + "(tag " + tag + "): hit from row " + p);
                                 hit++;
                                 hitIT = true;
                                 break;
@@ -146,7 +147,7 @@ namespace CachePerformance
                     if(hitIT == false)
                     {
                         // miss
-                        Console.WriteLine("miss");
+                        
                         //figures out where to write to
                         if (valid.Contains(false))
                         {
@@ -182,6 +183,7 @@ namespace CachePerformance
                         //passMiss++;
                         data[rowToWrite] = address;
                         valid[rowToWrite] = true;
+                        Console.WriteLine("Accessing " + address + "(tag " + tag + "): miss - cached to row " + rowToWrite);
 
                         for (int k = 0; k < lruArray.Length; k++)
                         {
@@ -200,11 +202,11 @@ namespace CachePerformance
                 Console.WriteLine("pass misses: " + passMiss);
                 totalMiss += passMiss;
             }
-            Console.WriteLine("Total misses over 5 iterations: " + totalMiss);
+            Console.WriteLine("Total misses over 1 iterations: " + totalMiss);
 
             double miss = totalMiss / 1;
 
-            double cpi = (miss * (20 + (1 * bytesPerBlock)) + (addresses.Length - miss) * 1) / addresses.Length;
+            double cpi = (miss * (18+ (3 * bytesPerBlock)) + (addresses.Length - miss) * 1) / addresses.Length;
 
             Console.WriteLine("average over 5 iterations CPI: " + cpi);
 

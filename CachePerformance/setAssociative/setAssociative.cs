@@ -13,7 +13,7 @@ namespace CachePerformance
         public const int validBit = 1;
 
         // cache size limit
-        public const int cacheLimit = 900;
+        public const int cacheLimit = 800;
 
         // size of the address
         public const int addressSize = 16;
@@ -109,7 +109,7 @@ namespace CachePerformance
             int set;
             bool itsAHit;
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 1; i++)
             {
                 passMiss = 0;
 
@@ -124,14 +124,14 @@ namespace CachePerformance
                     row = (address / bytesPerBlock) % rows;
                     offset = address % bytesPerBlock;
                     set = (address/bytesPerBlock) % rows;
-                    Console.WriteLine("set " + set + " tag " + tag);
+
                     //Hit
                     for(int j = 0; j < ways; j++)
                     {
                         //hit
-                        if(tagArray[set + (j * set)] == (int)tag && valid[set + (j * set)] == true)
+                        if(tagArray[set + (j * rows)] == (int)tag && valid[set + (j * rows)] == true)
                         {
-                            Console.WriteLine("hit" + row);
+                            Console.WriteLine("Accessing " + address + "(tag " + tag + "): hit from set " + set);
                             itsAHit = true;
                             break;
                         }
@@ -142,26 +142,26 @@ namespace CachePerformance
                     {
                         bool noneFalse = true;
 
-                        Console.WriteLine("miss" + row);
+                        Console.WriteLine("Accessing " + address + "(tag " + tag + "): miss - cached to set " + set);
 
                         passMiss++;
 
                         for (int p = 0; p < ways; p++)
                         {
-                            if (valid[set + (p * set)] == false)
+                            if (valid[set + (p * rows)] == false)
                             {
                                 noneFalse = false;
-                                tagArray[set + (p * set)] = (int)tag;
-                                valid[set + (p * set)] = true;
+                                tagArray[set + (p * rows)] = (int)tag;
+                                valid[set + (p * rows)] = true;
 
                                 for (int k = 0; k < ways; k++)
                                 {
                                     if (k == p)
                                     {
-                                        lruArray[set + (k * set)] = rows - 1;
+                                        lruArray[set + (k * rows)] = rows - 1;
                                     }
                                     else
-                                        lruArray[set + (k * set)] = lruArray[set + (k * set)] - 1;
+                                        lruArray[set + (k * rows)] = lruArray[set + (k * rows)] - 1;
                                 }
                                 break;
                             }
@@ -176,9 +176,9 @@ namespace CachePerformance
                             for (int w = 0; w < ways; w++)
                             {
 
-                                if (lruArray[set + (w * set)] < lowest)
+                                if (lruArray[set + (w * rows)] < lowest)
                                 {
-                                    lowest = lruArray[set + (w * set)];
+                                    lowest = lruArray[set + (w * rows)];
                                     wayToReplace = w;
                                 }
                             }
@@ -187,14 +187,14 @@ namespace CachePerformance
                             {
                                 if (wayToReplace == k)
                                 {
-                                    lruArray[set + (k * set)] = rows - 1;
+                                    lruArray[set + (k * rows)] = rows - 1;
                                 }
                                 else
-                                    lruArray[set + (k * set)] = lruArray[set + (k * set)] - 1;
+                                    lruArray[set + (k * rows)] = lruArray[set + (k * rows)] - 1;
                             }
 
-                            tagArray[set + (wayToReplace * set)] = (int)tag;
-                            valid[set + (wayToReplace * set)] = true;
+                            tagArray[set + (wayToReplace * rows)] = (int)tag;
+                            valid[set + (wayToReplace * rows)] = true;
                         }
                         
                     }
@@ -205,9 +205,9 @@ namespace CachePerformance
             }
             Console.WriteLine("Total misses over 5 iterations: " + totalMiss);
 
-            double miss = totalMiss / 5;
+            double miss = totalMiss / 1;
 
-            double cpi = (miss * (20 + (1 * bytesPerBlock)) + (addresses.Length - miss) * 1) / addresses.Length;
+            double cpi = (miss * (18 + (3 * bytesPerBlock)) + (addresses.Length - miss) * 1) / addresses.Length;
 
             Console.WriteLine("average over 5 iterations CPI: " + cpi);
 

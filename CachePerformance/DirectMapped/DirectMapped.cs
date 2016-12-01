@@ -96,7 +96,7 @@ namespace CachePerformance
             int row, passMiss;
             int totalMiss = 0;
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 50; i++)
             {
                 passMiss = 0;
                 
@@ -146,9 +146,9 @@ namespace CachePerformance
             }
             Console.WriteLine("Total misses over 5 iterations: " + totalMiss);
 
-            double miss = totalMiss / 5;
+            double miss = totalMiss / 50;
 
-            double cpi = (miss * ( 20 + (1 * bytesPerBlock)) + (addresses.Length - miss) * 1) / addresses.Length;
+            double cpi = (miss * ( 18 + (3 * bytesPerBlock)) + (addresses.Length - miss) * 1) / addresses.Length;
 
             Console.WriteLine("average over 5 iterations CPI: " + cpi);
 
