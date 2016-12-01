@@ -19,14 +19,14 @@ namespace CachePerformance
 
 
             // create a set associative cache
-            //setAssociative sA = new setAssociative(8, 4, 2, array);
+            //setAssociative sA = new setAssociative(1,8,10, array);
 
 
             // create a direct mapped cache
-            //DirectMapped dm = new DirectMapped(8, 8, array);
+            //DirectMapped dm = new DirectMapped(1,64, array);
 
             //// create a fully associative cache
-            FullyAssociative fA = new FullyAssociative(4, 16, array);
+            FullyAssociative fA = new FullyAssociative(2,32, array);
 
 
 
